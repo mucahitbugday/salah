@@ -472,6 +472,22 @@ class NotificationManager {
       await this.schedulePrayerNotifications(this.prayerTimes, settings);
     }
   }
+
+  /**
+   * Send test notification (for testing purposes)
+   */
+  async sendTestNotification(): Promise<void> {
+    try {
+      PushNotification.localNotification({
+        title: 'Salah - Test Bildirimi',
+        message: 'Bildirimler çalışıyor! Namaz vakitlerinde bildirim alacaksınız.',
+        channelId: 'salah-prayer-times',
+      });
+    } catch (error) {
+      console.error('[NotificationManager] Error sending test notification:', error);
+      throw error;
+    }
+  }
 }
 
 export default NotificationManager.getInstance();

@@ -22,6 +22,7 @@ import { formatTime, getTimeUntil } from '../../../utils/dateUtils';
 import { PrayerTimes, PrayerProgress, Ayah, Hadith } from '../../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NamazStackParamList } from '../../../navigation/types';
+import NotificationManager from '../../../core/NotificationManager';
 
 type NamazScreenNavigationProp = NativeStackNavigationProp<NamazStackParamList, 'NamazHome'>;
 
@@ -303,6 +304,24 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           )}
 
+          {/* Test Notification Button */}
+          {/* <TouchableOpacity
+            style={[styles.testButton, { backgroundColor: 'rgba(255, 193, 7, 0.3)', borderColor: 'rgba(255, 193, 7, 0.5)' }]}
+            onPress={async () => {
+              try {
+                await NotificationManager.sendTestNotification();
+                Alert.alert('Başarılı', 'Test bildirimi gönderildi! Bildirimler çalışıyor.');
+              } catch (error: any) {
+                Alert.alert('Hata', error.message || 'Bildirim gönderilemedi. Lütfen bildirim izinlerini kontrol edin.');
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <Text variant="body" style={styles.testButtonText}>
+              🔔 Test Bildirimi
+            </Text>
+          </TouchableOpacity> */}
+
           {/* Details Button */}
           <TouchableOpacity
             style={[styles.detailsButton, { backgroundColor: 'rgba(255, 255, 255, 0.2)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}
@@ -501,6 +520,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 24,
+  },
+  testButton: {
+    marginTop: 12,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
   progressContainer: {
     marginTop: 24,

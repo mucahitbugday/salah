@@ -23,6 +23,7 @@ import { PrayerTimes, PrayerProgress, Ayah, Hadith } from '../../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NamazStackParamList } from '../../../navigation/types';
 import NotificationManager from '../../../core/NotificationManager';
+import { NotificationSettingsModal } from '../../../components/NotificationSettingsModal';
 
 type NamazScreenNavigationProp = NativeStackNavigationProp<NamazStackParamList, 'NamazHome'>;
 
@@ -47,6 +48,8 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   const [randomAyah, setRandomAyah] = useState<Ayah | null>(null);
   const [randomHadith, setRandomHadith] = useState<Hadith | null>(null);
   const [timeUntilNext, setTimeUntilNext] = useState<string>('');
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [selectedPrayerKey, setSelectedPrayerKey] = useState<keyof PrayerProgress['prayers'] | null>(null);
 
   useEffect(() => {
     initializeData();
@@ -270,6 +273,10 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
                     isCurrent && styles.prayerButtonCurrent,
                   ]}
                   onPress={() => handleTogglePrayer(key)}
+                  onLongPress={() => {
+                    setSelectedPrayerKey(key);
+                    setNotificationModalVisible(true);
+                  }}
                   activeOpacity={0.8}
                 >
                   <Text variant="caption" style={styles.prayerButtonLabel}>
@@ -381,6 +388,18 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Notification Settings Modal */}
+      <NotificationSettingsModal
+        visible={notificationModalVisible}
+        onClose={() => {
+          setNotificationModalVisible(false);
+          setSelectedPrayerKey(null);
+        }}
+        prayerKey={selectedPrayerKey}
+        prayerTime={selectedPrayerKey && prayerTimes ? prayerTimes[selectedPrayerKey] : null}
+        prayerTimes={prayerTimes}
+      />
     </ImageBackground>
   );
 };

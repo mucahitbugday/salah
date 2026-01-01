@@ -39,6 +39,7 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "marked": "Marked",
     "noHistory": "No prayer history yet",
     "today": "Today",
     "yesterday": "Yesterday"

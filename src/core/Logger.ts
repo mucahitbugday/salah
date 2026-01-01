@@ -65,8 +65,8 @@ class Logger {
    */
   error(message: string, error?: Error | unknown, data?: unknown): void {
     const errorData = error instanceof Error 
-      ? { message: error.message, stack: error.stack, ...data }
-      : { error, ...data };
+      ? { message: error.message, stack: error.stack, ...(data && typeof data === 'object' ? data : {}) }
+      : { error, ...(data && typeof data === 'object' ? data : {}) };
     
     this.log('error', message, errorData);
 

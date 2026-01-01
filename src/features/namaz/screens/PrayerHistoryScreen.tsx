@@ -37,11 +37,15 @@ interface PrayerDetail {
 export const PrayerHistoryScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const { getAllProgress } = usePrayerStore();
+  const { getAllProgress, markPrayerForDate } = usePrayerStore();
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<FilterType>('daily');
   const [allProgress, setAllProgress] = useState<Record<string, PrayerProgress>>({});
   const [historyData, setHistoryData] = useState<PrayerHistoryItem[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<{ year: number; month: number }>(() => {
+    const today = new Date();
+    return { year: today.getFullYear(), month: today.getMonth() };
+  });
 
   useEffect(() => {
     loadHistory();
@@ -49,7 +53,7 @@ export const PrayerHistoryScreen: React.FC = () => {
 
   useEffect(() => {
     filterHistory();
-  }, [allProgress, filterType]);
+  }, [allProgress, filterType, selectedMonth]);
 
   const loadHistory = async () => {
     try {
@@ -85,14 +89,21 @@ export const PrayerHistoryScreen: React.FC = () => {
         });
         break;
 
-      case 'weekly':
-        // Pazartesiden başlayarak son 7 günü göster
-        const currentDay = today.getDay(); // 0 = Pazar, 1 = Pazartesi
-        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // Pazartesi = 0
+      case 'weekly': {
+        // Pazartesiden başlayarak bu haftanın 7 gününü göster
+        const currentDay = today.getDay(); // 0 = Pazar, 1 = Pazartesi, ..., 6 = Cumartesi
+        // Pazartesiden kaç gün geçti? (Pazartesi = 0, Pazar = 6)
+        const daysFromMondayWeekly = currentDay === 0 ? 6 : currentDay - 1;
         
+        // Bu haftanın pazartesini bul
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - daysFromMondayWeekly);
+        monday.setHours(0, 0, 0, 0);
+        
+        // Pazartesiden başlayarak 7 günü göster
         for (let i = 0; i < 7; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - daysFromMonday - (6 - i)); // Pazartesiden başla
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
           
           const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
           const progress = allProgress[dateKey] || null;
@@ -111,12 +122,25 @@ export const PrayerHistoryScreen: React.FC = () => {
           });
         }
         break;
+      }
 
-      case 'monthly':
-        // Son 30 günü minimal göster
-        for (let i = 0; i < 30; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
+      case 'monthly': {
+        // Seçilen ayın tüm günlerini göster
+        const firstDay = new Date(selectedMonth.year, selectedMonth.month, 1);
+        
+        // Ayın ilk gününün haftanın hangi günü olduğunu bul (0 = Pazar, 1 = Pazartesi)
+        const firstDayOfWeek = firstDay.getDay();
+        // Pazartesi = 1, Pazar = 0 olduğu için düzeltme yap
+        const daysFromMondayMonthly = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+        
+        // İlk pazartesiden başla (grid düzeni için)
+        const gridStartDate = new Date(firstDay);
+        gridStartDate.setDate(firstDay.getDate() - daysFromMondayMonthly);
+        
+        // 6 hafta x 7 gün = 42 gün göster (tam grid için)
+        for (let i = 0; i < 42; i++) {
+          const date = new Date(gridStartDate);
+          date.setDate(gridStartDate.getDate() + i);
           
           const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
           const progress = allProgress[dateKey] || null;
@@ -134,9 +158,8 @@ export const PrayerHistoryScreen: React.FC = () => {
             totalCount: 5,
           });
         }
-        // Tarihe göre ters sırala (en yeni üstte)
-        items.sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
         break;
+      }
     }
 
     setHistoryData(items);
@@ -167,9 +190,6 @@ export const PrayerHistoryScreen: React.FC = () => {
 
   const getPrayerDetails = async (dateKey: string, translationFn: (key: string) => string): Promise<PrayerDetail[]> => {
     const progress = allProgress[dateKey];
-    if (!progress) {
-      return [];
-    }
 
     // Mock location - gerçek uygulamada tarih bazlı location kullanılmalı
     const mockLocation = { latitude: 41.0082, longitude: 28.9784 };
@@ -184,17 +204,19 @@ export const PrayerHistoryScreen: React.FC = () => {
       isha: translationFn('namaz.isha'),
     };
 
+    // Progress yoksa bile tüm namazları boş olarak göster
     return prayerOrder.map((key) => ({
       name: prayerNames[key],
       key,
-      completed: progress.prayers[key],
+      completed: progress ? progress.prayers[key] : false,
       time: formatTime(prayerTimes[key]),
     }));
   };
 
-  const DailyViewComponent: React.FC<{ item: PrayerHistoryItem }> = ({ item }) => {
+  const DailyViewComponent: React.FC<{ item: PrayerHistoryItem; onUpdate: () => void }> = ({ item, onUpdate }) => {
     const { theme: themeContext } = useTheme();
     const { t: tContext } = useTranslation();
+    const { markPrayerForDate: markPrayerForDateContext } = usePrayerStore();
     const [prayerDetails, setPrayerDetails] = useState<PrayerDetail[]>([]);
     const [loadingDetails, setLoadingDetails] = useState(true);
 
@@ -238,7 +260,19 @@ export const PrayerHistoryScreen: React.FC = () => {
                       {prayer.time}
                     </Text>
                   </View>
-                  <View style={styles.prayerDetailRight}>
+                  <TouchableOpacity
+                    style={styles.prayerDetailRight}
+                    onPress={async () => {
+                      const newCompleted = !prayer.completed;
+                      await markPrayerForDateContext(item.date, prayer.key, newCompleted);
+                      // Reload details
+                      const details = await getPrayerDetails(item.date, tContext);
+                      setPrayerDetails(details);
+                      // Notify parent to reload
+                      onUpdate();
+                    }}
+                    activeOpacity={0.7}
+                  >
                     <Text style={[styles.prayerStatusIcon, { color: prayer.completed ? themeContext.colors.success : themeContext.colors.textSecondary }]}>
                       {prayer.completed ? '✓' : '○'}
                     </Text>
@@ -247,7 +281,7 @@ export const PrayerHistoryScreen: React.FC = () => {
                         {tContext('namaz.marked')}
                       </Text>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -259,7 +293,7 @@ export const PrayerHistoryScreen: React.FC = () => {
 
   const renderDailyView = () => {
     if (historyData.length === 0) return null;
-    return <DailyViewComponent item={historyData[0]} />;
+    return <DailyViewComponent item={historyData[0]} onUpdate={loadHistory} />;
   };
 
   const renderWeeklyView = () => {
@@ -282,7 +316,7 @@ export const PrayerHistoryScreen: React.FC = () => {
             const someCompleted = item.completedCount > 0;
             
             return (
-              <View
+              <TouchableOpacity
                 key={item.date}
                 style={[
                   styles.weeklyDayCell,
@@ -295,6 +329,18 @@ export const PrayerHistoryScreen: React.FC = () => {
                     borderColor: theme.colors.border,
                   },
                 ]}
+                onPress={async () => {
+                  // Tüm namazları kılındı olarak işaretle veya kaldır
+                  const newCompleted = !allCompleted;
+                  const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                  for (const prayerKey of prayerOrder) {
+                    await markPrayerForDate(item.date, prayerKey, newCompleted);
+                  }
+                  // Reload history
+                  const progress = await getAllProgress();
+                  setAllProgress(progress);
+                }}
+                activeOpacity={0.7}
               >
                 <Text variant="caption" style={[styles.weeklyDayNumber, { color: theme.colors.text }]}>
                   {item.dateObj.getDate()}
@@ -302,7 +348,7 @@ export const PrayerHistoryScreen: React.FC = () => {
                 <Text style={[styles.weeklyStatusIcon, { color: allCompleted ? '#FFFFFF' : theme.colors.textSecondary }]}>
                   {allCompleted ? '✓' : someCompleted ? '○' : '—'}
                 </Text>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -395,6 +441,33 @@ export const PrayerHistoryScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Monthly Month Selector */}
+      {filterType === 'monthly' && (
+        <View style={styles.monthSelector}>
+          <TouchableOpacity
+            style={[styles.monthNavButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            onPress={() => {
+              const newDate = new Date(selectedMonth.year, selectedMonth.month - 1, 1);
+              setSelectedMonth({ year: newDate.getFullYear(), month: newDate.getMonth() });
+            }}
+          >
+            <Text style={[styles.monthNavText, { color: theme.colors.text }]}>‹</Text>
+          </TouchableOpacity>
+          <Text variant="h3" style={[styles.monthTitle, { color: theme.colors.text }]}>
+            {new Date(selectedMonth.year, selectedMonth.month, 1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+          </Text>
+          <TouchableOpacity
+            style={[styles.monthNavButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+            onPress={() => {
+              const newDate = new Date(selectedMonth.year, selectedMonth.month + 1, 1);
+              setSelectedMonth({ year: newDate.getFullYear(), month: newDate.getMonth() });
+            }}
+          >
+            <Text style={[styles.monthNavText, { color: theme.colors.text }]}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Content */}
       {filterType === 'daily' && renderDailyView()}
       {filterType === 'weekly' && renderWeeklyView()}
@@ -404,9 +477,10 @@ export const PrayerHistoryScreen: React.FC = () => {
           renderItem={({ item }) => {
             const allCompleted = item.completedCount === item.totalCount;
             const someCompleted = item.completedCount > 0;
+            const isCurrentMonth = item.dateObj.getMonth() === selectedMonth.month && item.dateObj.getFullYear() === selectedMonth.year;
             
             return (
-              <View
+              <TouchableOpacity
                 style={[
                   styles.monthlyItem,
                   {
@@ -416,8 +490,22 @@ export const PrayerHistoryScreen: React.FC = () => {
                       ? 'rgba(255, 193, 7, 0.2)'
                       : theme.colors.surface,
                     borderColor: theme.colors.border,
+                    opacity: isCurrentMonth ? 1 : 0.3,
                   },
                 ]}
+                onPress={async () => {
+                  if (!isCurrentMonth) return;
+                  // Tüm namazları kılındı olarak işaretle veya kaldır
+                  const newCompleted = !allCompleted;
+                  const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                  for (const prayerKey of prayerOrder) {
+                    await markPrayerForDate(item.date, prayerKey, newCompleted);
+                  }
+                  // Reload history
+                  await loadHistory();
+                }}
+                activeOpacity={0.7}
+                disabled={!isCurrentMonth}
               >
                 <Text variant="caption" style={[styles.monthlyDate, { color: theme.colors.text }]}>
                   {formatDateShort(item.dateObj)}
@@ -425,7 +513,7 @@ export const PrayerHistoryScreen: React.FC = () => {
                 <Text style={[styles.monthlyStatusIcon, { color: allCompleted ? '#FFFFFF' : theme.colors.textSecondary }]}>
                   {allCompleted ? '✓' : someCompleted ? '○' : '—'}
                 </Text>
-              </View>
+              </TouchableOpacity>
             );
           }}
           keyExtractor={(item) => item.date}
@@ -594,5 +682,31 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     fontSize: 16,
+  },
+  // Month Selector
+  monthSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  monthNavButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthNavText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  monthTitle: {
+    fontWeight: '600',
+    textTransform: 'capitalize',
   },
 });

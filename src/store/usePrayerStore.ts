@@ -10,6 +10,7 @@ interface PrayerState {
   setPrayerTimes: (times: PrayerTimes) => void;
   setLocation: (location: Location) => void;
   markPrayer: (prayerName: keyof PrayerProgress['prayers'], completed: boolean) => Promise<void>;
+  markPrayerForDate: (dateKey: string, prayerName: keyof PrayerProgress['prayers'], completed: boolean) => Promise<void>;
   loadTodayProgress: () => Promise<void>;
   getAllProgress: () => Promise<Record<string, PrayerProgress>>;
 }
@@ -19,6 +20,10 @@ const PROGRESS_STORAGE_KEY = '@salah:prayerProgress';
 const getTodayKey = () => {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+};
+
+const getDateKey = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
 export const usePrayerStore = create<PrayerState>((set, get) => ({
@@ -57,6 +62,36 @@ export const usePrayerStore = create<PrayerState>((set, get) => ({
       set({ todayProgress: progress });
     } catch (error) {
       console.error('Error saving prayer progress:', error);
+    }
+  },
+  markPrayerForDate: async (dateKey, prayerName, completed) => {
+    try {
+      const allProgress = await AsyncStorage.getItem(PROGRESS_STORAGE_KEY);
+      const progressMap = allProgress ? JSON.parse(allProgress) : {};
+      
+      const progress: PrayerProgress = progressMap[dateKey] || {
+        date: dateKey,
+        prayers: {
+          fajr: false,
+          dhuhr: false,
+          asr: false,
+          maghrib: false,
+          isha: false,
+        },
+      };
+
+      progress.prayers[prayerName] = completed;
+      progressMap[dateKey] = progress;
+      
+      await AsyncStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progressMap));
+      
+      // Eğer bugün ise todayProgress'i de güncelle
+      const todayKey = getTodayKey();
+      if (dateKey === todayKey) {
+        set({ todayProgress: progress });
+      }
+    } catch (error) {
+      console.error('Error saving prayer progress for date:', error);
     }
   },
   loadTodayProgress: async () => {

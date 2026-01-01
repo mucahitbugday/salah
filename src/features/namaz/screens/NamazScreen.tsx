@@ -198,6 +198,27 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     >
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Header Icons */}
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            onPress={() => {
+              // @ts-ignore - Root navigation
+              navigation.getParent()?.navigate('Quran');
+            }}
+            style={styles.headerIconButton}
+          >
+            <Text style={styles.headerIcon}>📖</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              // @ts-ignore - Root navigation
+              navigation.getParent()?.navigate('Profile');
+            }}
+            style={styles.headerIconButton}
+          >
+            <Text style={styles.headerIcon}>👤</Text>
+          </TouchableOpacity>
+        </View>
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
@@ -333,6 +354,20 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  headerIconButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  headerIcon: {
+    fontSize: 24,
   },
   container: {
     flex: 1,

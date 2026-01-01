@@ -37,9 +37,10 @@ export const ProfileScreen: React.FC = () => {
       setLoading(true);
       const userData = await signInWithGoogle();
       await setUser(userData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign-in error:', error);
-      Alert.alert(t('common.error'), 'Giriş yapılamadı');
+      const errorMessage = error?.message || 'Giriş yapılamadı';
+      Alert.alert(t('common.error'), errorMessage);
     } finally {
       setLoading(false);
     }

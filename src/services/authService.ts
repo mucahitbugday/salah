@@ -5,7 +5,7 @@ import { User } from '../types';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
-  webClientId: 'YOUR_WEB_CLIENT_ID', // Replace with your actual client ID
+  webClientId: '314185582918-11u8evo15m2mbn7fplgt16s1d3v045so.apps.googleusercontent.com', // Replace with your actual client ID
 });
 
 export const signInWithGoogle = async (): Promise<User> => {

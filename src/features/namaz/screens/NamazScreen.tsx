@@ -199,7 +199,8 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header Icons */}
-        <View style={styles.headerIcons}>
+        {/* kuran profil sayfasına gitmek için tıklayın */}
+        {/* <View style={styles.headerIcons}>
           <TouchableOpacity
             onPress={() => {
               // @ts-ignore - Root navigation
@@ -218,7 +219,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
           >
             <Text style={styles.headerIcon}>👤</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}

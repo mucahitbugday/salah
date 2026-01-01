@@ -1,38 +1,80 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { initI18n } from './src/i18n';
+import { loadUserFromStorage } from './src/store/useAuthStore';
+import { useSettingsStore } from './src/store/useSettingsStore';
+import { usePrayerStore } from './src/store/usePrayerStore';
+import { useQuranStore } from './src/store/useQuranStore';
+import { requestPermissionWithAlert } from './src/utils/permissions';
+import { LoadingSpinner } from './src/components/LoadingSpinner';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+function AppContent() {
+  const { theme } = useTheme();
+  const { loadSettings, language } = useSettingsStore();
+  const { loadTodayProgress } = usePrayerStore();
+  const { loadReadingProgress } = useQuranStore();
+  const [isInitializing, setIsInitializing] = useState(true);
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      // Initialize i18n
+      await initI18n();
+
+      // Load user from storage
+      await loadUserFromStorage();
+
+      // Load settings
+      await loadSettings();
+
+      // Load prayer progress
+      await loadTodayProgress();
+
+      // Load Quran progress
+      await loadReadingProgress();
+
+      // Request notification permission
+      await requestPermissionWithAlert('notification');
+
+      setIsInitializing(false);
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      setIsInitializing(false);
+    }
+  };
+
+  if (isInitializing) {
+    return <LoadingSpinner fullScreen />;
+  }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={theme.colors.primary}
+      />
+      <AppNavigator />
+    </NavigationContainer>
   );
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
+function App() {
   return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

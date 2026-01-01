@@ -1,0 +1,79 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "navigation": {
+    "namaz": "Prayer",
+    "quran": "Quran",
+    "profile": "Profile"
+  },
+  "namaz": {
+    "title": "Prayer Times",
+    "fajr": "Fajr",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "markAsPrayed": "Mark as Prayed",
+    "markAsNotPrayed": "Mark as Not Prayed",
+    "currentPrayer": "Current Prayer",
+    "nextPrayer": "Next Prayer",
+    "prayerCompleted": "Prayer Completed",
+    "prayerNotCompleted": "Prayer Not Completed",
+    "viewAllPrayers": "View All Prayers",
+    "howToPray": "How to Pray",
+    "prayerVirtues": "Virtues",
+    "nearbyMosques": "Nearby Mosques",
+    "randomAyah": "Random Ayah",
+    "randomHadith": "Random Hadith"
+  },
+  "quran": {
+    "title": "Holy Quran",
+    "surahs": "Surahs",
+    "read": "Read",
+    "listen": "Listen",
+    "translation": "Translation",
+    "tafsir": "Tafsir",
+    "lastRead": "Last Read",
+    "readingProgress": "Reading Progress"
+  },
+  "profile": {
+    "title": "Profile",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signInWithGoogle": "Sign In with Google",
+    "dailyActivity": "Daily Activity",
+    "prayersCompleted": "Prayers Completed",
+    "quranReading": "Quran Reading",
+    "settings": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "notifications": "Notifications",
+    "backup": "Backup",
+    "backupToGoogleDrive": "Backup to Google Drive",
+    "name": "Name",
+    "surname": "Surname",
+    "email": "Email"
+  },
+  "permissions": {
+    "locationTitle": "Location Permission",
+    "locationMessage": "We need location permission to calculate prayer times.",
+    "notificationTitle": "Notification Permission",
+    "notificationMessage": "Permission is required to receive notifications for prayer times.",
+    "grant": "Grant",
+    "deny": "Deny"
+  },
+  "notifications": {
+    "prayerReminder": "Have you prayed?",
+    "prayerTime": "{{prayer}} time has come"
+  }
+}
+

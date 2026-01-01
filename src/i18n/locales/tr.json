@@ -1,0 +1,79 @@
+{
+  "common": {
+    "ok": "Tamam",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı"
+  },
+  "navigation": {
+    "namaz": "Namaz",
+    "quran": "Kur'an",
+    "profile": "Profil"
+  },
+  "namaz": {
+    "title": "Namaz Vakitleri",
+    "fajr": "Sabah",
+    "dhuhr": "Öğle",
+    "asr": "İkindi",
+    "maghrib": "Akşam",
+    "isha": "Yatsı",
+    "markAsPrayed": "Kıldım olarak işaretle",
+    "markAsNotPrayed": "Kılmadım olarak işaretle",
+    "currentPrayer": "Şu anki vakit",
+    "nextPrayer": "Sonraki vakit",
+    "prayerCompleted": "Namaz kılındı",
+    "prayerNotCompleted": "Namaz kılınmadı",
+    "viewAllPrayers": "Tüm namazları görüntüle",
+    "howToPray": "Nasıl Kılınır",
+    "prayerVirtues": "Faziletler",
+    "nearbyMosques": "Yakındaki Camiler",
+    "randomAyah": "Rastgele Ayet",
+    "randomHadith": "Rastgele Hadis"
+  },
+  "quran": {
+    "title": "Kur'an-ı Kerim",
+    "surahs": "Sureler",
+    "read": "Oku",
+    "listen": "Dinle",
+    "translation": "Meal",
+    "tafsir": "Tefsir",
+    "lastRead": "Son okunan",
+    "readingProgress": "Okuma ilerlemesi"
+  },
+  "profile": {
+    "title": "Profil",
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "signInWithGoogle": "Google ile Giriş Yap",
+    "dailyActivity": "Günlük Aktivite",
+    "prayersCompleted": "Kılınan Namazlar",
+    "quranReading": "Kur'an Okuma",
+    "settings": "Ayarlar",
+    "theme": "Tema",
+    "language": "Dil",
+    "notifications": "Bildirimler",
+    "backup": "Yedekle",
+    "backupToGoogleDrive": "Google Drive'a Yedekle",
+    "name": "Ad",
+    "surname": "Soyad",
+    "email": "E-posta"
+  },
+  "permissions": {
+    "locationTitle": "Konum İzni",
+    "locationMessage": "Namaz vakitlerini hesaplamak için konum iznine ihtiyacımız var.",
+    "notificationTitle": "Bildirim İzni",
+    "notificationMessage": "Namaz vakitlerinde bildirim almak için izin gerekiyor.",
+    "grant": "İzin Ver",
+    "deny": "Reddet"
+  },
+  "notifications": {
+    "prayerReminder": "Namazını kıldın mı?",
+    "prayerTime": "{{prayer}} vakti geldi"
+  }
+}
+

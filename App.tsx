@@ -19,7 +19,7 @@ import Logger from './src/core/Logger';
 
 function AppContent() {
   const { theme } = useTheme();
-  const { loadSettings, language } = useSettingsStore();
+  const { loadSettings } = useSettingsStore();
   const { loadTodayProgress } = usePrayerStore();
   const { loadReadingProgress } = useQuranStore();
   const [isInitializing, setIsInitializing] = useState(true);
@@ -50,11 +50,6 @@ function AppContent() {
 
       // Load prayer progress
       await loadTodayProgress();
-
-      // Load stats and streak
-      const prayerStore = usePrayerStore.getState();
-      await prayerStore.loadStats();
-      await prayerStore.loadStreak();
 
       // Load Quran progress
       await loadReadingProgress();

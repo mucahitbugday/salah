@@ -7,7 +7,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { RootTabParamList } from './types';
 import { NamazNavigator } from './NamazNavigator';
 import { QuranNavigator } from './QuranNavigator';
-import { ProfileScreen } from '../features/profile/screens/ProfileScreen';
+import { ProfileNavigator } from './ProfileNavigator';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -80,7 +80,7 @@ export const AppNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileNavigator}
         options={{
           tabBarLabel: t('navigation.profile'),
           tabBarIcon: ({ focused, color }) => (

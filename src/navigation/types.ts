@@ -4,7 +4,7 @@ import { PrayerTimes, Ayah, Hadith, Surah } from '../types';
 export type RootTabParamList = {
   Namaz: NavigatorScreenParams<NamazStackParamList>;
   Quran: NavigatorScreenParams<QuranStackParamList>;
-  Profile: undefined;
+  Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 
 export type NamazStackParamList = {
@@ -26,5 +26,9 @@ export type QuranStackParamList = {
   SurahDetail: {
     surah: Surah;
   };
+};
+
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
 };
 

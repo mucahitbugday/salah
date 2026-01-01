@@ -56,29 +56,31 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
             <RNText style={styles.icon}>{icon}</RNText>
           </View>
           <View style={styles.leftSection}>
-            <Text variant="h3" color={isCurrent ? 'primary' : 'text'}>
-              {name}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text variant="h3" color={isCurrent ? 'primary' : 'text'} style={styles.name}>
+                {name}
+              </Text>
+              <TouchableOpacity
+                onPress={onToggleComplete}
+                style={[
+                  styles.checkbox,
+                  {
+                    backgroundColor: completed ? theme.colors.success : 'transparent',
+                    borderColor: completed ? theme.colors.success : theme.colors.border,
+                  },
+                ]}
+              >
+                {completed && (
+                  <Text variant="body" style={styles.checkmark}>
+                    ✓
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
             <Text variant="body" color="textSecondary" style={styles.time}>
               {formatTime(time)}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={onToggleComplete}
-            style={[
-              styles.checkbox,
-              {
-                backgroundColor: completed ? theme.colors.success : 'transparent',
-                borderColor: completed ? theme.colors.success : theme.colors.border,
-              },
-            ]}
-          >
-            {completed && (
-              <Text variant="body" style={styles.checkmark}>
-                ✓
-              </Text>
-            )}
-          </TouchableOpacity>
         </View>
       </Card>
     </TouchableOpacity>
@@ -109,20 +111,30 @@ const styles = StyleSheet.create({
   leftSection: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  name: {
+    flex: 1,
+  },
   time: {
-    marginTop: 4,
+    marginTop: 0,
   },
   checkbox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 8,
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
   },
 });
 

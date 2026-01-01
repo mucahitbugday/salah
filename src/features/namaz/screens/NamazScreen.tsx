@@ -46,6 +46,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [randomAyah, setRandomAyah] = useState<Ayah | null>(null);
   const [randomHadith, setRandomHadith] = useState<Hadith | null>(null);
+  const [timeUntilNext, setTimeUntilNext] = useState<string>('');
 
   useEffect(() => {
     initializeData();
@@ -54,8 +55,22 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     if (prayerTimes) {
       loadRandomContent();
+      updateTimeUntilNext();
+      // Update countdown every minute
+      const interval = setInterval(updateTimeUntilNext, 60000);
+      return () => clearInterval(interval);
     }
   }, [prayerTimes]);
+
+  const updateTimeUntilNext = () => {
+    if (!prayerTimes) return;
+    const next = getNextPrayer(prayerTimes);
+    if (next) {
+      const nextTime = prayerTimes[next];
+      const timeStr = getTimeUntil(nextTime);
+      setTimeUntilNext(timeStr);
+    }
+  };
 
   const initializeData = async () => {
     setLoading(true);
@@ -171,6 +186,18 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     >
       <View style={styles.header}>
         <Text variant="h1">{t('namaz.title')}</Text>
+        {nextPrayer && timeUntilNext && (
+          <Card style={styles.nextPrayerCard}>
+            <View style={styles.nextPrayerRow}>
+              <Text variant="body" color="textSecondary">
+                {t('namaz.nextPrayer')}: {getPrayerName(nextPrayer)}
+              </Text>
+              <Text variant="h3" color="primary" style={styles.countdown}>
+                {timeUntilNext}
+              </Text>
+            </View>
+          </Card>
+        )}
         <ProgressBar progress={progress} style={styles.progressBar} />
         <Text variant="caption" color="textSecondary">
           {Math.round(progress)}% {t('namaz.prayerCompleted')}
@@ -257,8 +284,20 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
-  progressBar: {
+  nextPrayerCard: {
     marginTop: 12,
+    marginBottom: 12,
+  },
+  nextPrayerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  countdown: {
+    fontWeight: 'bold',
+  },
+  progressBar: {
+    marginTop: 8,
     marginBottom: 8,
   },
   prayerList: {

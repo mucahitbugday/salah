@@ -1,41 +1,99 @@
+import axios from 'axios';
 import { PrayerTimes, Location } from '../types';
 
-// Mock prayer times service
-// In production, this would call an API like adhan.xyz or similar
+// Aladhan API - Güvenilir ve ücretsiz namaz vakitleri API
+// Method 2 = Diyanet İşleri Başkanlığı (Türkiye)
+const ALADHAN_API = 'https://api.aladhan.com/v1/timings';
+
+interface AladhanResponse {
+  data: {
+    timings: {
+      Fajr: string;
+      Sunrise: string;
+      Dhuhr: string;
+      Asr: string;
+      Maghrib: string;
+      Isha: string;
+    };
+  };
+}
+
+/**
+ * Diyanet namaz vakitlerini getir (Aladhan API kullanarak)
+ */
 export const getPrayerTimes = async (
   location: Location,
   date: Date = new Date()
 ): Promise<PrayerTimes> => {
-  // Mock implementation - in production, use a real API
-  // Example: https://api.aladhan.com/v1/timings/${date.getTime()/1000}?latitude=${location.latitude}&longitude=${location.longitude}&method=2
-  
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  
-  // Mock times based on current time
-  const fajr = new Date(now);
-  fajr.setHours(5, 30, 0, 0);
-  
-  const dhuhr = new Date(now);
-  dhuhr.setHours(12, 30, 0, 0);
-  
-  const asr = new Date(now);
-  asr.setHours(16, 0, 0, 0);
-  
-  const maghrib = new Date(now);
-  maghrib.setHours(19, 0, 0, 0);
-  
-  const isha = new Date(now);
-  isha.setHours(20, 30, 0, 0);
-  
-  return {
-    fajr,
-    dhuhr,
-    asr,
-    maghrib,
-    isha,
-  };
+  try {
+    // Unix timestamp
+    const timestamp = Math.floor(date.getTime() / 1000);
+    
+    // Aladhan API'den vakitleri al (Method 13 = Türkiye Diyanet İşleri Başkanlığı)
+    const url = `${ALADHAN_API}/${timestamp}`;
+    const response = await axios.get<AladhanResponse>(url, {
+      params: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        method: 13, // Türkiye - Diyanet İşleri Başkanlığı
+        school: 0, // Shafi/Maliki/Hanbali (Diyanet standart hesaplama)
+      },
+      timeout: 10000,
+    });
+
+    if (!response.data || !response.data.data || !response.data.data.timings) {
+      throw new Error('No prayer times data received');
+    }
+
+    const timings = response.data.data.timings;
+    const baseDate = new Date(date);
+    baseDate.setHours(0, 0, 0, 0);
+
+    // Saat formatını parse et (HH:mm)
+    const parseTime = (timeStr: string): Date => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const time = new Date(baseDate);
+      time.setHours(hours, minutes, 0, 0);
+      return time;
+    };
+
+    return {
+      fajr: parseTime(timings.Fajr),
+      sunrise: parseTime(timings.Sunrise),
+      dhuhr: parseTime(timings.Dhuhr),
+      asr: parseTime(timings.Asr),
+      maghrib: parseTime(timings.Maghrib),
+      isha: parseTime(timings.Isha),
+    };
+  } catch (error) {
+    console.error('Error fetching Diyanet prayer times:', error);
+    // Fallback: Mock data (bugünün saatine göre)
+    const now = new Date();
+    const baseDate = new Date(now);
+    baseDate.setHours(0, 0, 0, 0);
+    
+    const fajr = new Date(baseDate);
+    fajr.setHours(5, 30, 0, 0);
+    const sunrise = new Date(baseDate);
+    sunrise.setHours(6, 30, 0, 0);
+    const dhuhr = new Date(baseDate);
+    dhuhr.setHours(12, 30, 0, 0);
+    const asr = new Date(baseDate);
+    asr.setHours(16, 0, 0, 0);
+    const maghrib = new Date(baseDate);
+    maghrib.setHours(19, 0, 0, 0);
+    const isha = new Date(baseDate);
+    isha.setHours(20, 30, 0, 0);
+    
+    return {
+      fajr,
+      sunrise,
+      dhuhr,
+      asr,
+      maghrib,
+      isha,
+    };
+  }
 };
 
 export const getCurrentPrayer = (prayerTimes: PrayerTimes): keyof PrayerTimes | null => {

@@ -12,6 +12,7 @@ export interface PrayerTimes {
   asr: Date;
   maghrib: Date;
   isha: Date;
+  sunrise?: Date; // Güneş doğuş vakti
 }
 
 export interface Location {
@@ -69,6 +70,13 @@ export interface PrayerProgress {
     asr: boolean;
     maghrib: boolean;
     isha: boolean;
+  };
+  markedAt?: {
+    fajr?: string; // ISO date string
+    dhuhr?: string;
+    asr?: string;
+    maghrib?: string;
+    isha?: string;
   };
 }
 

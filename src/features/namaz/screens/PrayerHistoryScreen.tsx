@@ -6,6 +6,7 @@ import {
   FlatList,
   TextStyle,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ interface PrayerDetail {
   key: keyof PrayerProgress['prayers'];
   completed: boolean;
   time?: string;
+  markedAt?: string; // ISO date string
 }
 
 export const PrayerHistoryScreen: React.FC = () => {
@@ -259,28 +261,33 @@ export const PrayerHistoryScreen: React.FC = () => {
                     <Text variant="caption" style={[styles.prayerDetailTime, { color: themeContext.colors.textSecondary }]}>
                       {prayer.time}
                     </Text>
+                    {prayer.markedAt && (
+                      <Text variant="caption" style={[styles.prayerMarkedAt, { color: themeContext.colors.textSecondary }]}>
+                        {tContext('namaz.marked')}: {new Date(prayer.markedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    )}
                   </View>
                   <TouchableOpacity
                     style={styles.prayerDetailRight}
                     onPress={async () => {
-                      const newCompleted = !prayer.completed;
-                      await markPrayerForDateContext(item.date, prayer.key, newCompleted);
-                      // Reload details
-                      const details = await getPrayerDetails(item.date, tContext);
-                      setPrayerDetails(details);
-                      // Notify parent to reload
-                      onUpdate();
+                      try {
+                        const newCompleted = !prayer.completed;
+                        await markPrayerForDateContext(item.date, prayer.key, newCompleted);
+                        // Reload details
+                        const details = await getPrayerDetails(item.date, tContext);
+                        setPrayerDetails(details);
+                        // Notify parent to reload
+                        onUpdate();
+                      } catch (error: any) {
+                        // Hata mesajını göster (vakti gelmemişse)
+                        Alert.alert('Hata', error.message || 'Bir hata oluştu');
+                      }
                     }}
                     activeOpacity={0.7}
                   >
                     <Text style={[styles.prayerStatusIcon, { color: prayer.completed ? themeContext.colors.success : themeContext.colors.textSecondary }]}>
                       {prayer.completed ? '✓' : '○'}
                     </Text>
-                    {prayer.completed && (
-                      <Text variant="caption" style={[styles.prayerMarkedTime, { color: themeContext.colors.textSecondary }]}>
-                        {tContext('namaz.marked')}
-                      </Text>
-                    )}
                   </TouchableOpacity>
                 </View>
               ))}
@@ -330,15 +337,19 @@ export const PrayerHistoryScreen: React.FC = () => {
                   },
                 ]}
                 onPress={async () => {
-                  // Tüm namazları kılındı olarak işaretle veya kaldır
-                  const newCompleted = !allCompleted;
-                  const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-                  for (const prayerKey of prayerOrder) {
-                    await markPrayerForDate(item.date, prayerKey, newCompleted);
+                  try {
+                    // Tüm namazları kılındı olarak işaretle veya kaldır
+                    const newCompleted = !allCompleted;
+                    const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                    for (const prayerKey of prayerOrder) {
+                      await markPrayerForDate(item.date, prayerKey, newCompleted);
+                    }
+                    // Reload history
+                    const progress = await getAllProgress();
+                    setAllProgress(progress);
+                  } catch (error: any) {
+                    Alert.alert('Hata', error.message || 'Bir hata oluştu');
                   }
-                  // Reload history
-                  const progress = await getAllProgress();
-                  setAllProgress(progress);
                 }}
                 activeOpacity={0.7}
               >
@@ -495,14 +506,18 @@ export const PrayerHistoryScreen: React.FC = () => {
                 ]}
                 onPress={async () => {
                   if (!isCurrentMonth) return;
-                  // Tüm namazları kılındı olarak işaretle veya kaldır
-                  const newCompleted = !allCompleted;
-                  const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-                  for (const prayerKey of prayerOrder) {
-                    await markPrayerForDate(item.date, prayerKey, newCompleted);
+                  try {
+                    // Tüm namazları kılındı olarak işaretle veya kaldır
+                    const newCompleted = !allCompleted;
+                    const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                    for (const prayerKey of prayerOrder) {
+                      await markPrayerForDate(item.date, prayerKey, newCompleted);
+                    }
+                    // Reload history
+                    await loadHistory();
+                  } catch (error: any) {
+                    Alert.alert('Hata', error.message || 'Bir hata oluştu');
                   }
-                  // Reload history
-                  await loadHistory();
                 }}
                 activeOpacity={0.7}
                 disabled={!isCurrentMonth}
@@ -609,6 +624,11 @@ const styles = StyleSheet.create({
   },
   prayerMarkedTime: {
     fontSize: 11,
+  },
+  prayerMarkedAt: {
+    fontSize: 10,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   // Weekly View
   weeklyContainer: {

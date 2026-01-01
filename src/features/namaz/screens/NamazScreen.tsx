@@ -6,6 +6,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,7 @@ import { requestPermissionWithAlert } from '../../../utils/permissions';
 import { Text } from '../../../components/Text';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { formatTime, getTimeUntil } from '../../../utils/dateUtils';
-import { PrayerTimes, Ayah, Hadith } from '../../../types';
+import { PrayerTimes, PrayerProgress, Ayah, Hadith } from '../../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NamazStackParamList } from '../../../navigation/types';
 
@@ -65,10 +66,12 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   const updateTimeUntilNext = () => {
     if (!prayerTimes) return;
     const next = getNextPrayer(prayerTimes);
-    if (next) {
+    if (next && next !== 'sunrise' && prayerTimes[next]) {
       const nextTime = prayerTimes[next];
-      const timeStr = getTimeUntil(nextTime);
-      setTimeUntilNext(timeStr);
+      if (nextTime) {
+        const timeStr = getTimeUntil(nextTime);
+        setTimeUntilNext(timeStr);
+      }
     }
   };
 
@@ -134,14 +137,19 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const handleTogglePrayer = async (prayerName: keyof PrayerTimes) => {
+  const handleTogglePrayer = async (prayerName: keyof PrayerProgress['prayers']) => {
     if (!todayProgress) return;
     const currentStatus = todayProgress.prayers[prayerName];
-    await markPrayer(prayerName, !currentStatus);
+    try {
+      await markPrayer(prayerName, !currentStatus);
+    } catch (error: any) {
+      // Vakti gelmemişse hata mesajı göster
+      Alert.alert('Hata', error.message || 'Namaz vakti henüz gelmedi');
+    }
   };
 
-  const getPrayerName = (key: keyof PrayerTimes): string => {
-    const names: Record<keyof PrayerTimes, string> = {
+  const getPrayerName = (key: keyof PrayerProgress['prayers']): string => {
+    const names: Record<keyof PrayerProgress['prayers'], string> = {
       fajr: t('namaz.fajr'),
       dhuhr: t('namaz.dhuhr'),
       asr: t('namaz.asr'),
@@ -151,10 +159,10 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     return names[key];
   };
 
-  const getBackgroundImage = (currentPrayerKey: keyof PrayerTimes | null): any => {
+  const getBackgroundImage = (currentPrayerKey: keyof PrayerProgress['prayers'] | null): any => {
     if (!currentPrayerKey) return require('../../../backround/Fajr.png');
 
-    const imageMap: Record<keyof PrayerTimes, any> = {
+    const imageMap: Record<keyof PrayerProgress['prayers'], any> = {
       fajr: require('../../../backround/Fajr.png'),
       dhuhr: require('../../../backround/Dhuhr.png'),
       asr: require('../../../backround/Asr.png'),
@@ -165,9 +173,10 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     return imageMap[currentPrayerKey] || require('../../../backround/Fajr.png');
   };
 
-  const getTimeUntilPrayer = (prayerKey: keyof PrayerTimes): string => {
+  const getTimeUntilPrayer = (prayerKey: keyof PrayerProgress['prayers']): string => {
     if (!prayerTimes) return '';
     const prayerTime = prayerTimes[prayerKey];
+    if (!prayerTime) return '';
     return getTimeUntil(prayerTime);
   };
 
@@ -188,11 +197,11 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   const currentPrayer = getCurrentPrayer(prayerTimes);
   const nextPrayer = getNextPrayer(prayerTimes);
 
-  const prayerOrder: Array<keyof PrayerTimes> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  const prayerOrder: Array<keyof PrayerProgress['prayers']> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
   return (
     <ImageBackground
-      source={getBackgroundImage(currentPrayer)}
+      source={getBackgroundImage(currentPrayer && currentPrayer !== 'sunrise' ? currentPrayer as keyof PrayerProgress['prayers'] : null)}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
@@ -229,13 +238,13 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         >
           {/* Next Prayer Countdown */}
-          {nextPrayer && timeUntilNext && (
+          {nextPrayer && nextPrayer !== 'sunrise' && timeUntilNext && (
             <View style={styles.countdownContainer}>
               <Text variant="caption" style={styles.countdownLabel}>
                 {t('namaz.nextPrayer')}
               </Text>
               <Text variant="h2" style={styles.countdownText}>
-                {getPrayerName(nextPrayer)}
+                {getPrayerName(nextPrayer as keyof PrayerProgress['prayers'])}
               </Text>
               <Text variant="h1" style={styles.countdownTime}>
                 {timeUntilNext}
@@ -249,6 +258,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
               const completed = todayProgress?.prayers[key] || false;
               const isCurrent = currentPrayer === key;
               const timeUntil = getTimeUntilPrayer(key);
+              const prayerTime = prayerTimes[key];
 
               return (
                 <TouchableOpacity
@@ -264,9 +274,11 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
                   <Text variant="caption" style={styles.prayerButtonLabel}>
                     {getPrayerName(key)}
                   </Text>
-                  <Text variant="h3" style={styles.prayerButtonTime}>
-                    {formatTime(prayerTimes[key])}
-                  </Text>
+                  {prayerTime && (
+                    <Text variant="h3" style={styles.prayerButtonTime}>
+                      {formatTime(prayerTime)}
+                    </Text>
+                  )}
                   {completed ? (
                     <Text style={styles.checkmark}>✓</Text>
                   ) : (
@@ -278,6 +290,18 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
               );
             })}
           </View>
+
+          {/* Sunrise Time */}
+          {prayerTimes?.sunrise && (
+            <View style={[styles.sunriseContainer, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderColor: 'rgba(255, 255, 255, 0.25)' }]}>
+              <Text variant="caption" style={styles.sunriseLabel}>
+                {t('namaz.sunriseTime')}
+              </Text>
+              <Text variant="h3" style={styles.sunriseTime}>
+                {formatTime(prayerTimes.sunrise)}
+              </Text>
+            </View>
+          )}
 
           {/* Details Button */}
           <TouchableOpacity
@@ -457,6 +481,26 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     fontSize: 10,
     textAlign: 'center',
+  },
+  sunriseContainer: {
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  sunriseLabel: {
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  sunriseTime: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 24,
   },
   progressContainer: {
     marginTop: 24,

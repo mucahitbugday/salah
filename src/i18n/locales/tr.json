@@ -41,6 +41,8 @@
     "weekly": "Haftalık",
     "monthly": "Aylık",
     "marked": "İşaretlendi",
+    "sunrise": "Güneş",
+    "sunriseTime": "Güneş Doğuş",
     "noHistory": "Henüz namaz geçmişi bulunmuyor",
     "today": "Bugün",
     "yesterday": "Dün"

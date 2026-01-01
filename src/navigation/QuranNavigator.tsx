@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QuranStackParamList } from './types';
 import { QuranScreen } from '../features/quran/screens/QuranScreen';
@@ -25,7 +26,20 @@ export const QuranNavigator: React.FC = () => {
       <Stack.Screen
         name="QuranHome"
         component={QuranScreen}
-        options={{ title: "Kur'an" }}
+        options={({ navigation }) => ({
+          title: "Kur'an",
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => {
+                // @ts-ignore - Root navigation
+                navigation.getParent()?.navigate('Main');
+              }}
+              style={{ marginLeft: 16, padding: 8 }}
+            >
+              <Text style={{ fontSize: 24 }}>🕌</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="SurahDetail"

@@ -1,8 +1,8 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { PrayerTimes, Ayah, Hadith, Surah } from '../types';
 
-export type RootTabParamList = {
-  Namaz: NavigatorScreenParams<NamazStackParamList>;
+export type RootStackParamList = {
+  Main: NavigatorScreenParams<NamazStackParamList>;
   Quran: NavigatorScreenParams<QuranStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
 };

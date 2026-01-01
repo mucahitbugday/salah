@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ProfileStackParamList } from './types';
@@ -26,7 +27,20 @@ export const ProfileNavigator: React.FC = () => {
       <Stack.Screen
         name="ProfileHome"
         component={ProfileScreen}
-        options={{ title: t('navigation.profile') }}
+        options={({ navigation }) => ({
+          title: t('navigation.profile'),
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => {
+                // @ts-ignore - Root navigation
+                navigation.getParent()?.navigate('Main');
+              }}
+              style={{ marginLeft: 16, padding: 8 }}
+            >
+              <Text style={{ fontSize: 24 }}>🕌</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
     </Stack.Navigator>
   );

@@ -6,12 +6,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { initI18n } from './src/i18n';
-import { loadUserFromStorage } from './src/store/useAuthStore';
+import { loadUserFromStorage, useAuthStore } from './src/store/useAuthStore';
 import { useSettingsStore } from './src/store/useSettingsStore';
 import { usePrayerStore } from './src/store/usePrayerStore';
 import { useQuranStore } from './src/store/useQuranStore';
 import { requestPermissionWithAlert } from './src/utils/permissions';
 import { LoadingSpinner } from './src/components/LoadingSpinner';
+import { ErrorBoundary } from './src/core/ErrorBoundary';
+import NotificationManager from './src/core/NotificationManager';
+import CloudSyncService from './src/core/CloudSyncService';
+import Logger from './src/core/Logger';
 
 function AppContent() {
   const { theme } = useTheme();
@@ -26,6 +30,8 @@ function AppContent() {
 
   const initializeApp = async () => {
     try {
+      Logger.info('Initializing app...');
+
       // Initialize i18n
       await initI18n();
 
@@ -34,9 +40,21 @@ function AppContent() {
 
       // Load settings
       await loadSettings();
+      const settings = useSettingsStore.getState();
+
+      // Initialize NotificationManager
+      if (settings.notificationSettings.enabled) {
+        await NotificationManager.initialize(settings.notificationSettings);
+        Logger.info('NotificationManager initialized');
+      }
 
       // Load prayer progress
       await loadTodayProgress();
+
+      // Load stats and streak
+      const prayerStore = usePrayerStore.getState();
+      await prayerStore.loadStats();
+      await prayerStore.loadStreak();
 
       // Load Quran progress
       await loadReadingProgress();
@@ -44,9 +62,22 @@ function AppContent() {
       // Request notification permission
       await requestPermissionWithAlert('notification');
 
+      // Auto sync if user is logged in
+      const authStore = useAuthStore.getState();
+      if (authStore.isAuthenticated && authStore.user) {
+        try {
+          await CloudSyncService.syncOnLogin(authStore.user);
+          Logger.info('Cloud sync completed');
+        } catch (syncError) {
+          Logger.error('Cloud sync failed', syncError);
+          // Don't block app initialization on sync failure
+        }
+      }
+
+      Logger.info('App initialization completed');
       setIsInitializing(false);
     } catch (error) {
-      console.error('Error initializing app:', error);
+      Logger.error('Error initializing app', error);
       setIsInitializing(false);
     }
   };
@@ -56,13 +87,15 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={theme.colors.primary}
-      />
-      <AppNavigator />
-    </NavigationContainer>
+    <ErrorBoundary>
+      <NavigationContainer>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={theme.colors.primary}
+        />
+        <AppNavigator />
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 }
 

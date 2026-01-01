@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Text as RNText } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Card } from './Card';
 import { Text } from './Text';
@@ -12,7 +12,20 @@ interface PrayerCardProps {
   isCurrent?: boolean;
   onPress: () => void;
   onToggleComplete: () => void;
+  prayerKey?: string; // fajr, dhuhr, asr, maghrib, isha
 }
+
+// Prayer icons mapping
+const getPrayerIcon = (prayerKey?: string): string => {
+  const icons: Record<string, string> = {
+    fajr: '🌅',
+    dhuhr: '☀️',
+    asr: '🌤️',
+    maghrib: '🌇',
+    isha: '🌙',
+  };
+  return icons[prayerKey || ''] || '🕌';
+};
 
 export const PrayerCard: React.FC<PrayerCardProps> = ({
   name,
@@ -21,8 +34,10 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
   isCurrent = false,
   onPress,
   onToggleComplete,
+  prayerKey,
 }) => {
   const { theme } = useTheme();
+  const icon = getPrayerIcon(prayerKey);
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
@@ -37,6 +52,9 @@ export const PrayerCard: React.FC<PrayerCardProps> = ({
         ]}
       >
         <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <RNText style={styles.icon}>{icon}</RNText>
+          </View>
           <View style={styles.leftSection}>
             <Text variant="h3" color={isCurrent ? 'primary' : 'text'}>
               {name}
@@ -75,6 +93,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  icon: {
+    fontSize: 24,
   },
   leftSection: {
     flex: 1,

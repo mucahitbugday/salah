@@ -189,6 +189,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
               time={prayerTimes[key]}
               completed={completed}
               isCurrent={isCurrent}
+              prayerKey={key}
               onPress={() => {
                 navigation.navigate('PrayerDetail', {
                   prayerName: key,

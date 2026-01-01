@@ -5,7 +5,9 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../theme/ThemeContext';
 import { usePrayerStore } from '../../../store/usePrayerStore';
@@ -13,10 +15,7 @@ import { getPrayerTimes, getCurrentPrayer, getNextPrayer } from '../../../servic
 import { getRandomAyah } from '../../../services/quranService';
 import { getRandomHadith } from '../../../services/hadithService';
 import { requestPermissionWithAlert } from '../../../utils/permissions';
-import { PrayerCard } from '../../../components/PrayerCard';
-import { Card } from '../../../components/Card';
 import { Text } from '../../../components/Text';
-import { ProgressBar } from '../../../components/ProgressBar';
 import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { formatTime, getTimeUntil } from '../../../utils/dateUtils';
 import { PrayerTimes, Ayah, Hadith } from '../../../types';
@@ -34,7 +33,6 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
   const { theme } = useTheme();
   const {
     prayerTimes,
-    location,
     todayProgress,
     setPrayerTimes,
     setLocation,
@@ -50,6 +48,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
 
   useEffect(() => {
     initializeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -60,6 +59,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
       const interval = setInterval(updateTimeUntilNext, 60000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [prayerTimes]);
 
   const updateTimeUntilNext = () => {
@@ -86,7 +86,7 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
         latitude: 41.0082,
         longitude: 28.9784,
       };
-      
+
       await requestPermissionWithAlert(
         'location',
         async () => {
@@ -140,13 +140,6 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
     await markPrayer(prayerName, !currentStatus);
   };
 
-  const getPrayerProgress = (): number => {
-    if (!todayProgress) return 0;
-    const prayers = Object.values(todayProgress.prayers);
-    const completed = prayers.filter((p) => p).length;
-    return (completed / prayers.length) * 100;
-  };
-
   const getPrayerName = (key: keyof PrayerTimes): string => {
     const names: Record<keyof PrayerTimes, string> = {
       fajr: t('namaz.fajr'),
@@ -156,6 +149,26 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
       isha: t('namaz.isha'),
     };
     return names[key];
+  };
+
+  const getBackgroundImage = (currentPrayerKey: keyof PrayerTimes | null): any => {
+    if (!currentPrayerKey) return require('../../../backround/Fajr.png');
+
+    const imageMap: Record<keyof PrayerTimes, any> = {
+      fajr: require('../../../backround/Fajr.png'),
+      dhuhr: require('../../../backround/Dhuhr.png'),
+      asr: require('../../../backround/Asr.png'),
+      maghrib: require('../../../backround/Maghrib.png'),
+      isha: require('../../../backround/Isha.png'),
+    };
+
+    return imageMap[currentPrayerKey] || require('../../../backround/Fajr.png');
+  };
+
+  const getTimeUntilPrayer = (prayerKey: keyof PrayerTimes): string => {
+    if (!prayerTimes) return '';
+    const prayerTime = prayerTimes[prayerKey];
+    return getTimeUntil(prayerTime);
   };
 
   if (loading) {
@@ -174,153 +187,309 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
 
   const currentPrayer = getCurrentPrayer(prayerTimes);
   const nextPrayer = getNextPrayer(prayerTimes);
-  const progress = getPrayerProgress();
+
+  const prayerOrder: Array<keyof PrayerTimes> = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+    <ImageBackground
+      source={getBackgroundImage(currentPrayer)}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
-      <View style={styles.header}>
-        <Text variant="h1">{t('namaz.title')}</Text>
-        {nextPrayer && timeUntilNext && (
-          <Card style={styles.nextPrayerCard}>
-            <View style={styles.nextPrayerRow}>
-              <Text variant="body" color="textSecondary">
-                {t('namaz.nextPrayer')}: {getPrayerName(nextPrayer)}
+      <View style={styles.overlay} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Next Prayer Countdown */}
+          {nextPrayer && timeUntilNext && (
+            <View style={styles.countdownContainer}>
+              <Text variant="caption" style={styles.countdownLabel}>
+                {t('namaz.nextPrayer')}
               </Text>
-              <Text variant="h3" color="primary" style={styles.countdown}>
+              <Text variant="h2" style={styles.countdownText}>
+                {getPrayerName(nextPrayer)}
+              </Text>
+              <Text variant="h1" style={styles.countdownTime}>
                 {timeUntilNext}
               </Text>
             </View>
-          </Card>
-        )}
-        <ProgressBar progress={progress} style={styles.progressBar} />
-        <Text variant="caption" color="textSecondary">
-          {Math.round(progress)}% {t('namaz.prayerCompleted')}
-        </Text>
-      </View>
+          )}
 
-      <View style={styles.prayerList}>
-        {(Object.keys(prayerTimes) as Array<keyof PrayerTimes>).map((key) => {
-          const isCurrent = currentPrayer === key;
-          const completed = todayProgress?.prayers[key] || false;
+          {/* Prayer Buttons - 5 buttons side by side */}
+          <View style={styles.prayerButtonsContainer}>
+            {prayerOrder.map((key) => {
+              const completed = todayProgress?.prayers[key] || false;
+              const isCurrent = currentPrayer === key;
+              const timeUntil = getTimeUntilPrayer(key);
 
-          return (
-            <PrayerCard
-              key={key}
-              name={getPrayerName(key)}
-              time={prayerTimes[key]}
-              completed={completed}
-              isCurrent={isCurrent}
-              prayerKey={key}
-              onPress={() => {
-                navigation.navigate('PrayerDetail', {
-                  prayerName: key,
-                  prayerTime: prayerTimes[key].toISOString(),
-                });
-              }}
-              onToggleComplete={() => handleTogglePrayer(key)}
-            />
-          );
-        })}
-      </View>
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.prayerButton,
+                    completed && styles.prayerButtonCompleted,
+                    isCurrent && styles.prayerButtonCurrent,
+                  ]}
+                  onPress={() => handleTogglePrayer(key)}
+                  activeOpacity={0.8}
+                >
+                  <Text variant="caption" style={styles.prayerButtonLabel}>
+                    {getPrayerName(key)}
+                  </Text>
+                  <Text variant="h3" style={styles.prayerButtonTime}>
+                    {formatTime(prayerTimes[key])}
+                  </Text>
+                  {completed ? (
+                    <Text style={styles.checkmark}>✓</Text>
+                  ) : (
+                    <Text variant="caption" style={styles.timeUntil}>
+                      {timeUntil}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-      {randomAyah && (
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate('AyahDetail', { ayah: randomAyah });
-          }}
-        >
-          <Card style={styles.contentCard}>
-            <Text variant="caption" color="textSecondary">
-              {t('namaz.randomAyah')}
+          {/* Progress Bar */}
+          {/* <View style={styles.progressContainer}>
+            <ProgressBar progress={progress} style={styles.progressBar} />
+            <Text variant="body" style={styles.progressText}>
+              {Math.round(progress)}% {t('namaz.prayerCompleted')}
             </Text>
-            <Text variant="h3" style={styles.arabicText}>
-              {randomAyah.arabicText}
-            </Text>
-            {randomAyah.turkishTranslation && (
-              <Text variant="body" color="textSecondary" style={styles.translation}>
-                {randomAyah.turkishTranslation}
-              </Text>
+          </View> */}
+
+          {/* Ayet ve Hadis - Aşağıda */}
+          <View style={styles.contentSection}>
+            {randomAyah && (
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('AyahDetail', { ayah: randomAyah });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.contentCard}>
+                  <Text variant="caption" style={styles.contentLabel}>
+                    {t('namaz.randomAyah')}
+                  </Text>
+                  <Text variant="h3" style={styles.arabicText}>
+                    {randomAyah.arabicText}
+                  </Text>
+                  {randomAyah.turkishTranslation && (
+                    <Text variant="body" style={styles.translation}>
+                      {randomAyah.turkishTranslation}
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
             )}
-          </Card>
-        </TouchableOpacity>
-      )}
 
-      {randomHadith && (
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate('HadithDetail', { hadith: randomHadith });
-          }}
-        >
-          <Card style={styles.contentCard}>
-            <Text variant="caption" color="textSecondary">
-              {t('namaz.randomHadith')}
-            </Text>
-            <Text variant="body" style={styles.hadithText}>
-              {randomHadith.text}
-            </Text>
-            <Text variant="caption" color="textSecondary" style={styles.source}>
-              {randomHadith.source}
-            </Text>
-          </Card>
-        </TouchableOpacity>
-      )}
-    </ScrollView>
+            {randomHadith && (
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('HadithDetail', { hadith: randomHadith });
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.contentCard}>
+                  <Text variant="caption" style={styles.contentLabel}>
+                    {t('namaz.randomHadith')}
+                  </Text>
+                  <Text variant="body" style={styles.hadithText}>
+                    {randomHadith.text}
+                  </Text>
+                  <Text variant="caption" style={styles.source}>
+                    {randomHadith.source}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
+
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  nextPrayerCard: {
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  nextPrayerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
     justifyContent: 'space-between',
   },
-  countdown: {
+  countdownContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  countdownLabel: {
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  countdownText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginBottom: 12,
+    fontSize: 24,
+  },
+  countdownTime: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 48,
+  },
+  prayerButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 8,
+  },
+  prayerButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    minHeight: 120,
+  },
+  prayerButtonCompleted: {
+    backgroundColor: 'rgba(52, 199, 89, 0.3)',
+    borderColor: 'rgba(52, 199, 89, 0.8)',
+  },
+  prayerButtonCurrent: {
+    backgroundColor: 'rgba(0, 183, 181, 0.3)',
+    borderColor: 'rgba(0, 183, 181, 0.8)',
+    borderWidth: 3,
+  },
+  prayerButtonLabel: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 8,
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  prayerButtonTime: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 32,
     fontWeight: 'bold',
   },
-  progressBar: {
-    marginTop: 8,
-    marginBottom: 8,
+  timeUntil: {
+    color: '#FFFFFF',
+    opacity: 0.8,
+    fontSize: 10,
+    textAlign: 'center',
   },
-  prayerList: {
-    marginBottom: 24,
+  progressContainer: {
+    marginTop: 24,
+    marginBottom: 30,
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  progressBar: {
+    marginBottom: 12,
+  },
+  progressText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  contentSection: {
+    marginTop: 'auto',
+    paddingTop: 40,
+    gap: 16,
+    width: '100%',
+    flexShrink: 0,
   },
   contentCard: {
     marginBottom: 16,
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  contentLabel: {
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   arabicText: {
     marginTop: 8,
+    marginBottom: 12,
     textAlign: 'right',
-    lineHeight: 32,
+    lineHeight: 36,
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '500',
   },
   translation: {
-    marginTop: 8,
+    marginTop: 12,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    lineHeight: 22,
+    fontSize: 15,
   },
   hadithText: {
     marginTop: 8,
-    lineHeight: 24,
+    marginBottom: 12,
+    lineHeight: 26,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
   source: {
     marginTop: 8,
+    color: '#FFFFFF',
+    opacity: 0.7,
     fontStyle: 'italic',
+    fontSize: 12,
   },
   errorText: {
     textAlign: 'center',

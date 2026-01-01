@@ -27,7 +27,7 @@ export const NamazNavigator: React.FC = () => {
       <Stack.Screen
         name="NamazHome"
         component={NamazScreen}
-        options={{ title: 'Namaz' }}
+        options={{ title: 'Namaz', headerShown: false }}
       />
       <Stack.Screen
         name="PrayerDetail"

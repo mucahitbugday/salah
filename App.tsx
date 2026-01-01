@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { ThemeProvider } from './src/theme/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { initI18n } from './src/i18n';
 import { loadUserFromStorage, useAuthStore } from './src/store/useAuthStore';
@@ -18,7 +18,6 @@ import CloudSyncService from './src/core/CloudSyncService';
 import Logger from './src/core/Logger';
 
 function AppContent() {
-  const { theme } = useTheme();
   const { loadSettings } = useSettingsStore();
   const { loadTodayProgress } = usePrayerStore();
   const { loadReadingProgress } = useQuranStore();
@@ -84,10 +83,6 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <NavigationContainer>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={theme.colors.primary}
-        />
         <AppNavigator />
       </NavigationContainer>
     </ErrorBoundary>

@@ -62,7 +62,7 @@ export const AppNavigator: React.FC = () => {
         name="Namaz"
         component={NamazNavigator}
         options={{
-          tabBarLabel: t('navigation.namaz'),
+          // tabBarLabel: t('navigation.namaz'),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon icon="🕌" focused={focused} color={color} />
           ),

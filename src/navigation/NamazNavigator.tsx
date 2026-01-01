@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NamazStackParamList } from './types';
 import { NamazScreen } from '../features/namaz/screens/NamazScreen';
 import { PrayerDetailScreen } from '../features/namaz/screens/PrayerDetailScreen';
+import { PrayerHistoryScreen } from '../features/namaz/screens/PrayerHistoryScreen';
 import { AyahDetailScreen } from '../features/namaz/screens/AyahDetailScreen';
 import { HadithDetailScreen } from '../features/namaz/screens/HadithDetailScreen';
 import { useTheme } from '../theme/ThemeContext';
@@ -33,6 +34,11 @@ export const NamazNavigator: React.FC = () => {
         name="PrayerDetail"
         component={PrayerDetailScreen}
         options={{ title: 'Namaz Detayı' }}
+      />
+      <Stack.Screen
+        name="PrayerHistory"
+        component={PrayerHistoryScreen}
+        options={{ title: 'Namaz Geçmişi' }}
       />
       <Stack.Screen
         name="AyahDetail"

@@ -13,6 +13,7 @@ export type NamazStackParamList = {
     prayerName: keyof PrayerTimes;
     prayerTime: string; // ISO string for serialization
   };
+  PrayerHistory: undefined;
   AyahDetail: {
     ayah: Ayah;
   };

@@ -11,6 +11,7 @@ interface PrayerState {
   setLocation: (location: Location) => void;
   markPrayer: (prayerName: keyof PrayerProgress['prayers'], completed: boolean) => Promise<void>;
   loadTodayProgress: () => Promise<void>;
+  getAllProgress: () => Promise<Record<string, PrayerProgress>>;
 }
 
 const PROGRESS_STORAGE_KEY = '@salah:prayerProgress';
@@ -97,6 +98,18 @@ export const usePrayerStore = create<PrayerState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error loading prayer progress:', error);
+    }
+  },
+  getAllProgress: async () => {
+    try {
+      const allProgress = await AsyncStorage.getItem(PROGRESS_STORAGE_KEY);
+      if (allProgress) {
+        return JSON.parse(allProgress) as Record<string, PrayerProgress>;
+      }
+      return {};
+    } catch (error) {
+      console.error('Error loading all prayer progress:', error);
+      return {};
     }
   },
 }));

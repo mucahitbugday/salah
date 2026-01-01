@@ -257,13 +257,16 @@ export const NamazScreen: React.FC<Props> = ({ navigation }) => {
             })}
           </View>
 
-          {/* Progress Bar */}
-          {/* <View style={styles.progressContainer}>
-            <ProgressBar progress={progress} style={styles.progressBar} />
-            <Text variant="body" style={styles.progressText}>
-              {Math.round(progress)}% {t('namaz.prayerCompleted')}
+          {/* Details Button */}
+          <TouchableOpacity
+            style={[styles.detailsButton, { backgroundColor: 'rgba(255, 255, 255, 0.2)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}
+            onPress={() => navigation.navigate('PrayerHistory')}
+            activeOpacity={0.8}
+          >
+            <Text variant="body" style={styles.detailsButtonText}>
+              {t('namaz.details')}
             </Text>
-          </View> */}
+          </TouchableOpacity>
 
           {/* Ayet ve Hadis - Aşağıda */}
           <View style={styles.contentSection}>
@@ -434,6 +437,19 @@ const styles = StyleSheet.create({
   progressText: {
     color: '#FFFFFF',
     textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  detailsButton: {
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  detailsButtonText: {
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
   },

@@ -33,7 +33,15 @@
     "prayerVirtues": "Virtues",
     "nearbyMosques": "Nearby Mosques",
     "randomAyah": "Random Ayah",
-    "randomHadith": "Random Hadith"
+    "randomHadith": "Random Hadith",
+    "history": "Prayer History",
+    "details": "Details",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "noHistory": "No prayer history yet",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "quran": {
     "title": "Holy Quran",

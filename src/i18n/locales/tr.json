@@ -34,7 +34,15 @@
     "prayerVirtues": "Faziletler",
     "nearbyMosques": "Yakındaki Camiler",
     "randomAyah": "Rastgele Ayet",
-    "randomHadith": "Rastgele Hadis"
+    "randomHadith": "Rastgele Hadis",
+    "history": "Namaz Geçmişi",
+    "details": "Detay",
+    "daily": "Günlük",
+    "weekly": "Haftalık",
+    "monthly": "Aylık",
+    "noHistory": "Henüz namaz geçmişi bulunmuyor",
+    "today": "Bugün",
+    "yesterday": "Dün"
   },
   "quran": {
     "title": "Kur'an-ı Kerim",
